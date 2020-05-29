@@ -1,7 +1,9 @@
 module Parsers (
     prepare,
+    Input,
     Outcome (..),
-    pseq, pchar, plower, (<|>), (|>>), pbetween
+    Parser,
+    pseq, pchar, plower, (<|>), (|>>), pbetween, pbparens
 ) where
 
 import Data.Char
@@ -80,3 +82,6 @@ pright l r = pbind l (\_ -> r)
 
 pbetween :: Parser a -> Parser b -> Parser c -> Parser c
 pbetween l r m = pright l (pleft m r)
+
+pbparens :: Parser a -> Parser a
+pbparens = pbetween (pchar '(') (pchar ')')
