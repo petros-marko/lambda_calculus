@@ -45,8 +45,10 @@ freeHelper (Application e1 e2) bound soFar = Set.union (freeHelper e1 bound soFa
 fresh :: Set.Set Char -> Char
 fresh s = Set.elemAt 0 $ Set.difference (Set.fromList ['a'..'z']) s
 
-betaReduce :: Expression -> Expression -> Expression
-betaReduce wh to = to -- TODO Write real implementation for beta reduction
+betaReduce :: Char -> Expression -> Expression -> Expression
+betaReduce v var@(Variable c) w = if v == c then w else var
+betaReduce v abs@(Abstraction c e) w = if v /= c then Abstraction c (betaReduce v e w) else abs 
+betaReduce v app@(Application e1 e2) w = Application (betaReduce v e1 w) (betaReduce v e2 w)
 
 eval :: Expression -> Expression
 eval var@(Variable _) = var
@@ -56,5 +58,5 @@ eval app = let app'@(Application e1 e2) = alphaNormalize app
                r2 = eval e2
            in
                case r1 of
-                    abs@(Abstraction _ _) -> eval $ betaReduce r1 r2
+                    abs@(Abstraction c e) -> eval $ betaReduce c e r2
                     exp                   -> Application r1 r2
