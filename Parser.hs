@@ -8,7 +8,12 @@ import Parsers
 data Expression = Variable Char
                  |Abstraction Char Expression
                  |Application Expression Expression
-                 deriving (Eq, Show)
+                 deriving Eq
+
+instance Show Expression where
+    show (Variable c) = c:""
+    show (Abstraction c e) = "(L" ++ c:"" ++ "." ++ (show e) ++ ")"
+    show (Application e1 e2) = "(" ++ (show e1) ++ (show e2) ++ ")"
 
 pvariable :: Parser Expression
 pvariable = plower |>> Variable
