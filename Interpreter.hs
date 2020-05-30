@@ -7,18 +7,29 @@ import qualified Data.Set as Set
 import Parser
 
 alphaNormalize :: Expression -> Expression
-alphaNormalize e = alphaNormalizeHelper e (free e) (Map.fromList [])
+alphaNormalize e = fst $ alphaNormalizeHelper e (free e) (Map.fromList [])
 
-alphaNormalizeHelper :: Expression -> Set.Set Char -> Map.Map Char Char -> Expression
-alphaNormalizeHelper var@(Variable c) u r = case Map.lookup c r of
-                                                 Just c' -> Variable c'
-                                                 Nothing -> var
-alphaNormalizeHelper abs@(Abstraction c e) u r = if Set.member c u then
-                                                    let c' = fresh u in
-                                                        Abstraction c' (alphaNormalizeHelper e (Set.insert c' u) (Map.insert c c' r))
+alphaNormalizeHelper :: Expression -> Set.Set Char -> Map.Map Char Char -> (Expression, Set.Set Char)
+alphaNormalizeHelper var@(Variable c) u m = case Map.lookup c m of
+                                                 Just c' -> (Variable c', Set.insert c' u)
+                                                 Nothing -> (var, u)
+alphaNormalizeHelper abs@(Abstraction c e) u m = if Set.member c u then
+                                                    let c' = fresh u
+                                                        r  = (alphaNormalizeHelper e (Set.insert c' u) (Map.insert c c' m))
+                                                        (e' , u') = r
+                                                    in
+                                                        ((Abstraction c' e'), u')
                                                  else
-                                                    Abstraction c (alphaNormalizeHelper e (Set.insert c u) r)
-alphaNormalizeHelper app@(Application e1 e2) u r = Application (alphaNormalizeHelper e1 u r) (alphaNormalizeHelper e2 u r)
+                                                    let r = (alphaNormalizeHelper e (Set.insert c u) m)
+                                                        (e', u') = r
+                                                    in
+                                                        (Abstraction c e', u')
+alphaNormalizeHelper app@(Application e1 e2) u m = let r1 = (alphaNormalizeHelper e1 u m)
+                                                       (e1', u1') = r1
+                                                       r2 = (alphaNormalizeHelper e2 u1' m)
+                                                       (e2', u2') = r2
+                                                    in
+                                                       (Application e1' e2', u2')
 
 free :: Expression -> Set.Set Char
 free e = freeHelper e (Set.fromList []) (Set.fromList [])
