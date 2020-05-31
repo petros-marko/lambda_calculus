@@ -43,7 +43,9 @@ freeHelper (Abstraction c e) bound soFar = freeHelper e (Set.insert c bound) soF
 freeHelper (Application e1 e2) bound soFar = Set.union (freeHelper e1 bound soFar) (freeHelper e2 bound soFar)
 
 fresh :: Set.Set String -> String
-fresh s = Set.elemAt 0 $ Set.difference (Set.fromList [show l| l <- ['a'..'z']]) s
+fresh s = let allStrings = [ c : str | str <- "" : allStrings, c <- ['a'..'z'], (not $ (c:str) `Set.member` s)] in
+              allStrings !! 0
+
 
 betaReduce :: String -> Expression -> Expression -> Expression
 betaReduce v var@(Variable c) w = if v == c then w else var
