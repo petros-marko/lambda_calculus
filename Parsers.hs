@@ -3,7 +3,7 @@ module Parsers (
     Input,
     Outcome (..),
     Parser,
-    pseq, pchar, plower, (<|>), (|>>), pbetween, pmany0, pmany1, pbparens
+    pseq, pchar, plower, (<|>), (|>>), pbetween, pmany0, pmany1, pbparens, pleft
 ) where
 
 import Data.Char
