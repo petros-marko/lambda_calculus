@@ -3,10 +3,11 @@ module Parsers (
     Input,
     Outcome (..),
     Parser,
-    pseq, pchar, plower, (<|>), (|>>), pbetween, pbparens
+    pseq, pchar, plower, (<|>), (|>>), pbetween, pmany0, pmany1, pbparens
 ) where
 
 import Data.Char
+import Data.List
 
 type Input = (String, Int)
 
@@ -82,6 +83,17 @@ pright l r = pbind l (\_ -> r)
 
 pbetween :: Parser a -> Parser b -> Parser c -> Parser c
 pbetween l r m = pright l (pleft m r)
+
+pmany0 :: Parser a -> Input -> Outcome [a]
+pmany0 p i = let pm0 xs i = case p i of
+                                 Failure p r -> Success xs i
+                                 Success a i'-> pm0 (a:xs) i'
+             in  case pm0 [] i of
+                      Success xs i' -> Success (reverse xs) i'
+                      Failure p r   -> Failure p r
+
+pmany1 :: Parser a -> Parser [a]
+pmany1 p = pseq p (pmany0 p) (\(x,xs) -> x:xs)
 
 pbparens :: Parser a -> Parser a
 pbparens = pbetween (pchar '(') (pchar ')')
