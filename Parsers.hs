@@ -3,7 +3,7 @@ module Parsers (
     Input,
     Outcome (..),
     Parser,
-    pseq, pchar, plower, (<|>), (|>>), pbetween, pmany0, pmany1, pbparens, pleft
+    pseq, pchar, plower, (<|>), (|>>), pbetween, pmany0, pmany1, pbparens, pleft, psmany1, psmany0, pstr
 ) where
 
 import Data.Char
@@ -94,6 +94,15 @@ pmany0 p i = let pm0 xs i = case p i of
 
 pmany1 :: Parser a -> Parser [a]
 pmany1 p = pseq p (pmany0 p) (\(x,xs) -> x:xs)
+
+pstr :: String -> Parser String
+pstr s = foldl (\acc c -> pseq acc (pchar c) (\(x, ch) -> x ++ [ch])) (presult "") s
+
+psmany1 :: Parser [Char]
+psmany1 = pmany1 (pchar ' ')
+
+psmany0 :: Parser [Char]
+psmany0 = pmany0 (pchar ' ')
 
 pbparens :: Parser a -> Parser a
 pbparens = pbetween (pchar '(') (pchar ')')
