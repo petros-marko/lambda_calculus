@@ -5,21 +5,21 @@ module Parser (
 
 import Parsers
 
-data Expression = Variable Char
-                 |Abstraction Char Expression
+data Expression = Variable String
+                 |Abstraction String Expression
                  |Application Expression Expression
                  deriving Eq
 
 instance Show Expression where
-    show (Variable c) = c:""
-    show (Abstraction c e) = "(L" ++ c:"" ++ "." ++ (show e) ++ ")"
+    show (Variable c) = c
+    show (Abstraction c e) = "(L" ++ c ++ "." ++ (show e) ++ ")"
     show (Application e1 e2) = "(" ++ (show e1) ++ (show e2) ++ ")"
 
 pvariable :: Parser Expression
-pvariable = plower |>> Variable
+pvariable = plower |>> (:"") |>> Variable
 
 pabstraction :: Parser Expression
-pabstraction = pbparens (pseq (pbetween (pchar 'L') (pchar '.') plower) pexpression (\(v, e) -> Abstraction v e))
+pabstraction = pbparens (pseq (pbetween (pchar 'L') (pchar '.') plower) pexpression (\(v, e) -> Abstraction (v:"") e))
 
 papplication :: Parser Expression
 papplication = pbparens (pseq pexpression pexpression (\(e1, e2) -> Application e1 e2))

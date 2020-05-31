@@ -9,7 +9,7 @@ import Parser
 alphaNormalize :: Expression -> Expression
 alphaNormalize e = fst $ alphaNormalizeHelper e (free e) (Map.fromList [])
 
-alphaNormalizeHelper :: Expression -> Set.Set Char -> Map.Map Char Char -> (Expression, Set.Set Char)
+alphaNormalizeHelper :: Expression -> Set.Set String -> Map.Map String String -> (Expression, Set.Set String)
 alphaNormalizeHelper var@(Variable c) u m = case Map.lookup c m of
                                                  Just c' -> (Variable c', Set.insert c' u)
                                                  Nothing -> (var, u)
@@ -31,10 +31,10 @@ alphaNormalizeHelper app@(Application e1 e2) u m = let r1 = (alphaNormalizeHelpe
                                                     in
                                                        (Application e1' e2', u2')
 
-free :: Expression -> Set.Set Char
+free :: Expression -> Set.Set String
 free e = freeHelper e (Set.fromList []) (Set.fromList [])
 
-freeHelper :: Expression -> Set.Set Char -> Set.Set Char -> Set.Set Char
+freeHelper :: Expression -> Set.Set String -> Set.Set String -> Set.Set String
 freeHelper (Variable c) bound soFar = if Set.member c bound then
                                          soFar
                                       else
@@ -42,10 +42,10 @@ freeHelper (Variable c) bound soFar = if Set.member c bound then
 freeHelper (Abstraction c e) bound soFar = freeHelper e (Set.insert c bound) soFar
 freeHelper (Application e1 e2) bound soFar = Set.union (freeHelper e1 bound soFar) (freeHelper e2 bound soFar)
 
-fresh :: Set.Set Char -> Char
-fresh s = Set.elemAt 0 $ Set.difference (Set.fromList ['a'..'z']) s
+fresh :: Set.Set String -> String
+fresh s = Set.elemAt 0 $ Set.difference (Set.fromList [show l| l <- ['a'..'z']]) s
 
-betaReduce :: Char -> Expression -> Expression -> Expression
+betaReduce :: String -> Expression -> Expression -> Expression
 betaReduce v var@(Variable c) w = if v == c then w else var
 betaReduce v abs@(Abstraction c e) w = if v /= c then Abstraction c (betaReduce v e w) else abs 
 betaReduce v app@(Application e1 e2) w = Application (betaReduce v e1 w) (betaReduce v e2 w)
