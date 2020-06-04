@@ -60,7 +60,7 @@ betaReduce v app@(Application e1 e2) w = Application (betaReduce v e1 w) (betaRe
 evalHelper :: Expression -> Map.Map String Expression -> Expression
 evalHelper l_t@(LetExpr (c, d) e) m = evalHelper e (Map.insert c d m)
 evalHelper var@(Variable c) m = case Map.lookup c m of
-                                     Just e -> e
+                                     Just e -> evalHelper e m
                                      Nothing -> var
 evalHelper abs@(Abstraction c exp) m = Abstraction c (evalHelper exp m)
 evalHelper app m = let app'@(Application e1 e2) = alphaNormalize app
