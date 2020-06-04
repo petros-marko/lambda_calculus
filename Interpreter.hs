@@ -57,19 +57,41 @@ betaReduce v var@(Variable c) w = if v == c then w else var
 betaReduce v abs@(Abstraction c e) w = if v /= c then Abstraction c (betaReduce v e w) else abs 
 betaReduce v app@(Application e1 e2) w = Application (betaReduce v e1 w) (betaReduce v e2 w)
 
-evalHelper :: Expression -> Map.Map String Expression -> Expression
+evalHelper :: Expression -> Map.Map String Expression -> (Expression, Map.Map String Expression)
 evalHelper l_t@(LetExpr (c, d) e) m = evalHelper e (Map.insert c d m)
 evalHelper var@(Variable c) m = case Map.lookup c m of
-                                     Just e -> evalHelper e m
-                                     Nothing -> var
-evalHelper abs@(Abstraction c exp) m = Abstraction c (evalHelper exp m)
-evalHelper app m = let app'@(Application e1 e2) = alphaNormalize app
-                       r1 = evalHelper e1 m
-                       r2 = evalHelper e2 m
-                   in
-                       case r1 of
-                            abs@(Abstraction c e) -> evalHelper (betaReduce c e r2) m
-                            exp                   -> Application r1 r2
+                                     Just e -> (e, m) --evalHelper e m
+                                     Nothing -> (var, m)
+evalHelper abs@(Abstraction c exp) m = let r = evalHelper exp m
+                                           (e, m') = r
+                                       in  (Abstraction c e, m')
+evalHelper app@(Application e1 e2) m = case e1 of
+                                            var'@(Variable c) -> let r = evalHelper var' m
+                                                                     (e, m') = r
+                                                                 in if var' == e then
+                                                                       let r' = evalHelper e2 m
+                                                                           (e', m'') = r'
+                                                                       in (Application var' e', m'')
+                                                                    else 
+                                                                       (Application e e2, m')
+                                            abs'@(Abstraction c e) -> (betaReduce c e e2, m)
+                                            app' -> let r = evalHelper e1 m
+                                                        (e', m') = r
+                                                    in  if e' /= e1 then
+                                                           (Application e' e2, m')
+                                                        else
+                                                           let r' = evalHelper e2 m
+                                                               (e'', m'') = r'
+                                                           in  (Application e1 e'', m'')
+
+betaNorm :: Expression -> Map.Map String Expression -> Expression
+betaNorm e m = let e' = alphaNormalize e
+                   r  = evalHelper e' m
+                   (e'', m') = r
+               in  if e'' == e' then
+                      e
+                   else
+                      betaNorm e'' m'
 
 eval :: Expression -> Expression
-eval e = evalHelper e (Map.fromList [])
+eval e = betaNorm e (Map.fromList [])
