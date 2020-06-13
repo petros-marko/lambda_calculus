@@ -13,8 +13,13 @@ data Expression = Variable String
 
 instance Show Expression where
     show (Variable c) = c
-    show (Abstraction c e) = "(L" ++ c ++ "." ++ (show e) ++ ")"
-    show (Application e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
+    show (Abstraction c e) = "L" ++ c ++ "." ++ (show e)
+    show (Application e1@(Abstraction _ _) e2@(Abstraction _ _)) = "(" ++ (show e1) ++ ") (" ++ (show e2) ++ ")"
+    show (Application e1@(Abstraction _ _) e2@(Application _ _)) = "(" ++ (show e1) ++ ") (" ++ (show e2) ++ ")"
+    show (Application e1@(Abstraction _ _) e2) = "(" ++ (show e1) ++ ") " ++ (show e2)
+    show (Application e1 e2@(Abstraction _ _)) = (show e1) ++ " (" ++ (show e2) ++ ")"
+    show (Application e1 e2@(Application _ _)) = (show e1) ++ " (" ++ (show e2) ++ ")"
+    show (Application e1 e2) = (show e1) ++ " " ++ (show e2)
     show (LetExpr (c,def) ein) = "let " ++ c ++ " = " ++ (show def) ++ " in:\n" ++ (show ein)
 
 pvariable :: Parser Expression
